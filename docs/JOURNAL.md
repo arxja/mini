@@ -4,6 +4,18 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-04
 
+- Phase 4 piece 1: SSR render only. .tsx pages return HTML.
+- Learned: VNode is just an object. Components are just functions.
+  renderToString is a simple recursive walk.
+- Learned: escaping text AND attribute values is the #1 SSR security
+  rule. XSS via user content is trivial without it.
+- Learned: events can't be serialized. Server strips them. Client
+  will reattach them during hydration (piece 2).
+- Next: Phase 4 piece 2 — hydration. Same component runs in the
+  browser, finds existing DOM, attaches events.
+
+## 2026-10-04
+
 - Phase 2 complete: trie router + file-based routing.
 - Learned: static > param priority in trie. Backtracking requires
   params to accumulate on the way UP the recursion, not in a shared
