@@ -4,15 +4,37 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-04
 
-- Phase 2a: trie router with params + per-route middleware.
-- Learned: trie is the right shape for paths. Static > param priority.
-- Learned: params accumulate on the way UP the recursion — avoids
-  leaking params from abandoned backtracking branches.
-- Learned: pre-compose route chains at registration time. Zero compose
+- Phase 2 complete: trie router + file-based routing.
+- Learned: static > param priority in trie. Backtracking requires
+  params to accumulate on the way UP the recursion, not in a shared
+  mutable object.
+- Learned: pre-compose route chains at registration. Zero compose
   work per request.
-- Learned: type-level enforcement — RouteChain tuple rejects routes
-  without a terminal handler at compile time.
-- Next: Phase 2b — file-based routing. Walk `app/`, map files to routes.
+- Learned: RouteChain tuple enforces "must end with a terminal
+  handler" at the type level.
+- Learned: file walker is a policy. fileToPattern is pure and cheap
+  to unit-test exhaustively.
+- Learned: `pathToFileURL` required for dynamic import; ESM caches
+  by URL. HMR will need cache-busting.
+- Learned: self-referencing package.json exports — files import from
+  'mini' by name, no relative paths into src/.
+- Learned: eslint scoped overrides — disable rules for the narrowest
+  scope that unblocks. tests/fixtures/**/* allows `any`.
+- 32 tests green. /todos/:id, 405 with Allow header, POST echo all
+  work in the example app.
+- Next: Phase 4 (SSR + minimal renderer). HMR after — building it
+  without a client runtime is half a feature.
+
+## 2026-10-04
+
+- Phase 1 done: context, router, app, CLI demo. /hello serves.
+- Learned: layering (server -> app -> compose -> router), test seam
+  via app.handle(ctx), last-line-of-defense with headersSent check.
+- Learned: 405 vs 404 is a real distinction (Allow header) — matters
+  for clients. Router stays policy-free; policy lives in app.
+- Learned: structural invariants > documented invariants. Router
+  appended at handle() time, so it's always last.
+- Next: Phase 2 — file-based routing.
 
 ## 2026-10-03
 
