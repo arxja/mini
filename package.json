@@ -6,6 +6,9 @@
   "engines": {
     "node": ">=20"
   },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/cli.ts dev",
     "build": "tsc --noEmit && tsx src/cli.ts build",

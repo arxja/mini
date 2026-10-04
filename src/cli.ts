@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 import { createApp } from './http/app.js'
 
-const [, , command] = process.argv
+const [, , command, ...args] = process.argv
 
-const commands: Record<string, () => Promise<void> | void> = {
-  async dev() {
+const commands: Record<string, (args: string[]) => Promise<void> | void> = {
+  async dev(args) {
+    const routesDir = args[0] ?? './app'
     const app = createApp()
 
-    // Temporary demo: a logger + one route. Deleted in Phase 2.
     app.use(async (_ctx, next) => {
       const t0 = Date.now()
       await next()
       console.log(`[mini] handled in ${Date.now() - t0}ms`)
     })
 
-    app.get('/hello', (ctx) => {
-      ctx.res.setHeader('content-type', 'text/plain')
-      ctx.res.end('hello from mini')
-    })
+    await app.routes(routesDir)
 
     const port = 3000
     app.listen(port, () => {
@@ -37,7 +34,7 @@ const commands: Record<string, () => Promise<void> | void> = {
 const run = commands[command ?? '']
 if (!run) {
   console.error(`Unknown command: ${command ?? '(none)'}`)
-  console.error(`Usage: mini <dev|build|start>`)
+  console.error(`Usage: mini <dev|build|start> [routes-dir]`)
   process.exit(1)
 }
-await run()
+await run(args)
