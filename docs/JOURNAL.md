@@ -2,6 +2,18 @@
 
 One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
+## 2026-10-04
+
+- Phase 2a: trie router with params + per-route middleware.
+- Learned: trie is the right shape for paths. Static > param priority.
+- Learned: params accumulate on the way UP the recursion — avoids
+  leaking params from abandoned backtracking branches.
+- Learned: pre-compose route chains at registration time. Zero compose
+  work per request.
+- Learned: type-level enforcement — RouteChain tuple rejects routes
+  without a terminal handler at compile time.
+- Next: Phase 2b — file-based routing. Walk `app/`, map files to routes.
+
 ## 2026-10-03
 
 - Phase 1 done: context, router, app, and CLI demo. /hello serves.

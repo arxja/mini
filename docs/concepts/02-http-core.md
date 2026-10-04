@@ -70,6 +70,50 @@ seam from day 1. It's why `tests/app.test.ts` runs in microseconds.
 - Request body parsing — probably Phase 4.
 - Response helpers (`ctx.json()`, `ctx.html()`) — Phase 4.
 
+## Phase 2a — the trie
+
+Replaced linear scan with a trie of path segments. O(segments) per match,
+independent of route count.
+
+### Static > param priority
+
+When both `/users/me` and `/users/:id` match `/users/me`, static wins.
+This is a correctness property, not a preference — users adding more
+specific routes later shouldn't have to worry about registration order.
+Implementation: at each node, try static first; if it dead-ends,
+backtrack and try param.
+
+### Params built on the way up
+
+`walk` returns `{ node, params }` — params are accumulated as the
+recursion unwinds, not as it descends. This avoids leaking params from
+abandoned branches during backtracking.
+
+### Pre-composition
+
+Each route's chain (middleware + terminal handler) is composed ONCE at
+registration via `toRunnable`, and the resulting function is what the
+trie stores. `match()` returns a ready-to-run function. Zero compose
+work per request.
+
+### Per-route middleware
+
+`app.get('/admin', auth, log, handler)` — variadic. The last argument
+is the terminal handler; everything before it is middleware. Enforced
+at the type level via `RouteChain = readonly [...Middleware[], Handler]`.
+
+The handler is wrapped as a terminal middleware (`async (c) => handler(c)`)
+so it fits the compose signature. Same onion, one more layer.
+
+### What's still missing
+
+- Wildcards (`/files/*`) — not yet.
+- Regex params (`/:id(\\d+)`) — not yet.
+- Optional params (`/:id?`) — not yet.
+- Param name conflicts at the same node — first wins, silently. Real
+  routers error. Acceptable for now.
+- HEAD / OPTIONS verbs — not yet.
+
 ## Reading
 
 - Koa's context: https://koajs.com/#context
