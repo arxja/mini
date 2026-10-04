@@ -2,20 +2,16 @@ import http from 'node:http'
 import { compose } from './compose.js'
 import { createCtx } from './context.js'
 import { createRouter, type Method } from './router.js'
-import type { Ctx, Handler, Middleware } from './types.js'
+import type { Ctx, Middleware, RouteChain } from './types.js'
 
 export interface App {
   use(mw: Middleware): App
-  get(path: string, handler: Handler): App
-  post(path: string, handler: Handler): App
-  put(path: string, handler: Handler): App
-  patch(path: string, handler: Handler): App
-  delete(path: string, handler: Handler): App
+  get(path: string, ...chain: RouteChain): App
+  post(path: string, ...chain: RouteChain): App
+  put(path: string, ...chain: RouteChain): App
+  patch(path: string, ...chain: RouteChain): App
+  delete(path: string, ...chain: RouteChain): App
   listen(port: number, cb?: () => void): http.Server
-  /**
-   * Test hook: run a single request through the pipeline without binding
-   * a port. Use this in tests; use `listen` in the CLI.
-   */
   handle(ctx: Ctx): Promise<void>
 }
 
@@ -23,12 +19,13 @@ export function createApp(): App {
   const middlewares: Middleware[] = []
   const router = createRouter()
 
-  // The router middleware is *always* the last one in the chain.
-  // It's the app's responsibility to append it — users never see it.
   const routerMiddleware: Middleware = async (c) => {
-    const handler = router.match(c.method, c.path)
-    if (handler) {
-      await handler(c)
+    const match = router.match(c.method, c.path)
+
+    if (match) {
+      // Populate params in-place so the readonly reference stays stable.
+      Object.assign(c.params, match.params)
+      await match.run(c)
       return
     }
 
@@ -44,10 +41,12 @@ export function createApp(): App {
     c.res.end('Not Found')
   }
 
-  const register = (method: Method) => (path: string, handler: Handler) => {
-    router.add(method, path, handler)
-    return app
-  }
+  const register =
+    (method: Method) =>
+    (path: string, ...chain: RouteChain): App => {
+      router.add(method, path, chain)
+      return app
+    }
 
   const app: App = {
     use(mw) {
@@ -69,7 +68,6 @@ export function createApp(): App {
       const server = http.createServer((req, res) => {
         const ctx = createCtx(req, res)
         app.handle(ctx).catch((err: unknown) => {
-          // Top-level safety net. Nothing else caught this.
           console.error('[mini] unhandled error:', err)
           if (!res.headersSent) {
             res.statusCode = 500

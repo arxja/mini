@@ -10,6 +10,7 @@ export function createCtx(req: IncomingMessage, res: ServerResponse): Ctx {
     method: (req.method ?? 'GET').toUpperCase(),
     path: url.pathname,
     query: url.searchParams,
+    params: {},
     state: {},
   }
 }
