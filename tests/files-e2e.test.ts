@@ -40,4 +40,16 @@ describe('file-based routing end-to-end', () => {
     expect(r.res.headers.get('allow')).toContain('GET')
     expect(r.res.headers.get('allow')).toContain('POST')
   })
+
+  it('renders .tsx page to full HTML shell', async () => {
+    const app = createApp()
+    await app.routes(join(import.meta.dirname, 'fixtures/routes'))
+
+    const r = makeCtx('GET', '/page')
+    await app.handle(r.ctx)
+
+    expect(r.res.headers.get('content-type')).toContain('text/html')
+    expect(r.res.body).toContain('<!doctype html>')
+    expect(r.res.body).toContain('<div id="root"><h1>from a page</h1></div>')
+  })
 })

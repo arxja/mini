@@ -3,6 +3,8 @@ import { join, relative, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { Handler } from '../http/types.js'
 import type { Method } from '../http/router.js'
+import { renderShell } from '../runtime/html-shell.js'
+import type { Component } from '../runtime/vnode.js'
 
 const METHOD_NAMES = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const satisfies readonly Method[]
 
@@ -12,7 +14,7 @@ export interface FileRoute {
   handler: Handler
 }
 
-type RouteModule = Partial<Record<Method, Handler>>
+type RouteModule = Partial<Record<Method, Handler>> & { default?: Component }
 
 // ---------------------------------------------------------------------------
 // Pure: path → URL pattern
@@ -28,7 +30,7 @@ type RouteModule = Partial<Record<Method, Handler>>
  *   'users/[id]/posts.ts'   -> '/users/:id/posts'
  */
 export function fileToPattern(rel: string): string {
-  const noExt = rel.replace(/\.(ts|js)$/, '')
+  const noExt = rel.replace(/\.(ts|tsx|js|jsx)$/, '')
   const normalized = noExt.split(sep).join('/')
   const segments = normalized.split('/').filter(Boolean)
   if (segments[segments.length - 1] === 'index') segments.pop()
@@ -53,7 +55,7 @@ async function walk(dir: string): Promise<string[]> {
     const full = join(dir, entry.name)
     if (entry.isDirectory()) {
       files.push(...(await walk(full)))
-    } else if (entry.isFile() && /\.(ts|js)$/.test(entry.name)) {
+    } else if (entry.isFile() && /\.(ts|tsx|js|jsx)$/.test(entry.name)) {
       files.push(full)
     }
   }
@@ -80,6 +82,22 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
     const pattern = fileToPattern(rel)
     const mod = await loadModule(abs)
 
+    // .tsx files are pages: default export is a Component.
+    if (rel.endsWith('.tsx')) {
+      const Component = mod.default
+      if (typeof Component !== 'function') {
+        console.warn(`[mini] .tsx without default export: ${rel}`)
+        continue
+      }
+      routes.push({
+        pattern,
+        method: 'GET',
+        handler: pageHandler(Component),
+      })
+      continue
+    }
+
+    // .ts files are API routes: named exports per method.
     let found = false
     for (const method of METHOD_NAMES) {
       const handler = mod[method]
@@ -94,4 +112,21 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
   }
 
   return routes
+}
+
+function pageHandler(Component: Component): Handler {
+  return (ctx) => {
+    const root = Component({
+      params: ctx.params,
+      query: Object.fromEntries(ctx.query.entries()),
+    })
+    const html = renderShell(root, {
+      payload: {
+        params: ctx.params,
+        query: Object.fromEntries(ctx.query.entries()),
+      },
+    })
+    ctx.res.setHeader('content-type', 'text/html; charset=utf-8')
+    ctx.res.end(html)
+  }
 }

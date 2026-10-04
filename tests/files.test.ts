@@ -29,6 +29,7 @@ describe('loadFileRoutes', () => {
     expect(keys).toEqual([
       'GET /',
       'GET /hello',
+      'GET /page',
       'GET /users',
       'GET /users/:id',
       'GET /users/:id/posts',
