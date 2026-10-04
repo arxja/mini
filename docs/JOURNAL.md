@@ -4,6 +4,19 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-04
 
+- Phase 4b: JSX enabled + hydration walk.
+- Learned: JSX is just syntax. TS rewrites it to a function call whose
+  name is configurable via jsxImportSource. Same syntax as React now.
+- Learned: hydration is a parallel walk of VNode tree and DOM tree,
+  attaching events only. Doesn't touch anything else — the text and
+  structure are already in the DOM from SSR.
+- Learned: hydration mismatch = loud error, not silent drift. Caused
+  by non-determinism, window access, or missing payload state.
+- Learned: jsdom + per-file @vitest-environment pragma for DOM tests.
+- Next: piece 4c — client bundling + real browser interactivity.
+
+## 2026-10-04
+
 - Phase 4 piece 1: SSR render only. .tsx pages return HTML.
 - Learned: VNode is just an object. Components are just functions.
   renderToString is a simple recursive walk.

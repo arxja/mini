@@ -60,10 +60,60 @@ A page is a full HTML document. `renderShell` provides
 container. Later this is where the payload script and client runtime
 go.
 
-## What's still missing
+## Phase 4b — hydration
 
-- Hydration on the client
-- Signals / interactivity
-- JSX (use `h()` for now)
-- Bundling the client runtime
-- Layouts / route groups
+### What hydration is
+
+The server sent HTML. The browser shows it. Now the buttons need to
+work. Hydration is: run the same component in the browser, get the
+same VNode tree, walk it in parallel with the DOM, attach events.
+
+### What hydration is NOT
+
+- Not "re-render everything." We don't create new DOM.
+- Not "diff the server tree against a client tree." There is only one
+  client tree, and it must match the server DOM.
+
+### The walk
+
+    hydrate(vnode, dom):
+      null/false         -> nothing
+      string/number      -> nothing (text already exists)
+      array              -> walk DOM children in lockstep
+      Component          -> call it, hydrate result against same DOM
+      Element            -> attach events from props, recurse into
+                            children against el.childNodes
+
+### Events
+
+Only props matching /^on[A-Z]/ become listeners. The event name is
+key.slice(2).toLowerCase(): onClick -> click, onInput -> input.
+
+Events are the ONLY thing hydration does. Props like class, href,
+text content — all already in the DOM from SSR. Hydration doesn't
+touch them. That's why it's cheap.
+
+### Mismatch
+
+If VNode.children.length > DOM.childNodes.length at any node, we throw.
+Real React warns and re-renders the subtree client-side. We don't —
+loud failure beats silent corruption, and the lesson is the same.
+
+The three ways to cause a mismatch:
+
+1. Non-deterministic content (Date.now, Math.random)
+2. Reading browser-only state during render (window.innerWidth)
+3. Client and server seeing different data (state not in payload)
+
+### JSX runtime
+
+With "jsx": "react-jsx" and "jsxImportSource": "mini", TypeScript
+rewrites <div>hi</div> to jsx('div', { children: 'hi' }) imported from
+'mini/jsx-runtime'. Our jsx/jsxs forward to h(). This is how every
+framework does it — JSX is a syntax, not a runtime.
+
+### Still missing
+
+- Client bundle delivery (how does the browser get the component code?)
+- Signals and re-rendering (piece 4c)
+- Server-sent runtime script
