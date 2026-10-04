@@ -1,11 +1,12 @@
-import { h } from 'mini'
-
 export default function Home() {
-  return h(
-    'div',
-    {},
-    h('h1', {}, 'Todo'),
-    h('p', {}, 'Try /todos (JSON) or /about'),
-    h('ul', {}, h('li', {}, 'learn compose'), h('li', {}, 'learn trie')),
+  return (
+    <div>
+      <h1>Todo</h1>
+      <p>Try /todos (JSON) or /about</p>
+      <ul>
+        <li>learn compose</li>
+        <li>learn trie</li>
+      </ul>
+    </div>
   )
 }

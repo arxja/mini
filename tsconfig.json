@@ -12,7 +12,9 @@
     "skipLibCheck": true,
     "noEmit": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "mini"
   },
   "include": ["src", "examples", "tests", "*.config.ts"]
 }
