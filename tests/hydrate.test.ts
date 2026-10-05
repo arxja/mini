@@ -16,7 +16,7 @@ describe('hydrate', () => {
     const dom = container('<button>click</button>')
     const fn = vi.fn()
 
-    hydrate(h('button', { onClick: fn }, 'click'), dom.firstChild!)
+    hydrate(h('button', { onClick: fn }, 'click'), dom)
 
     ;(dom.querySelector('button') as HTMLButtonElement).click()
     expect(fn).toHaveBeenCalledOnce()
@@ -24,18 +24,20 @@ describe('hydrate', () => {
 
   it('recurses into children and wires each handler separately', () => {
     const dom = container('<div><button>a</button><button>b</button></div>')
+    // dom = <div wrapper><div><button>a</button><button>b</button></div></div>
+    // container.childNodes = [<div>]
+    // The vnode tree is <div> with two button children.
+    // hydrate(tree, dom) → matches tree against container.childNodes[0] = <div>.
+    // Then matches tree.children (2 buttons) against <div>.childNodes (2 buttons).
     const fnA = vi.fn()
     const fnB = vi.fn()
-
     const tree = h(
       'div',
       {},
       h('button', { onClick: fnA }, 'a'),
       h('button', { onClick: fnB }, 'b'),
     )
-
-    hydrate(tree, dom.firstChild!)
-
+    hydrate(tree, dom)
     ;(dom.querySelectorAll('button')[1] as HTMLButtonElement).click()
     expect(fnA).not.toHaveBeenCalled()
     expect(fnB).toHaveBeenCalledOnce()
@@ -46,7 +48,7 @@ describe('hydrate', () => {
     const Widget = () => h('span', {}, 'hi')
 
     // Should not throw — the VNode produced by Widget matches the DOM.
-    hydrate(h(Widget, {}), dom.firstChild!)
+    hydrate(h(Widget, {}), dom)
     expect(dom.innerHTML).toBe('<span>hi</span>')
   })
 
@@ -54,7 +56,7 @@ describe('hydrate', () => {
     const dom = container('<div><h1>a</h1><p>b</p></div>')
     const before = dom.innerHTML
 
-    hydrate(h('div', {}, h('h1', {}, 'a'), h('p', {}, 'b')), dom.firstChild!)
+    hydrate(h('div', {}, h('h1', {}, 'a'), h('p', {}, 'b')), dom)
 
     // The test: we only attach events. The DOM shape is unchanged.
     expect(dom.innerHTML).toBe(before)
@@ -65,7 +67,7 @@ describe('hydrate', () => {
     const dom = container('<div><span>a</span></div>')
     const tree = h('div', {}, h('span', {}, 'a'), h('span', {}, 'b'))
 
-    expect(() => hydrate(tree, dom.firstChild!)).toThrow(/mismatch/i)
+    expect(() => hydrate(tree, dom)).toThrow(/mismatch/i)
   })
 
   it('does nothing for text-only content', () => {
