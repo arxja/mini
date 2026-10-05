@@ -2,6 +2,23 @@
 
 One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
+## 2026-10-05
+
+- Phase 4c: per-page client bundles, real browser hydration.
+- Learned: server/client boundary must be enforced at bundle time.
+  Two entries + shared core. Same pattern as react/react-dom-server.
+- Learned: esbuild stdin bundles a string, not a file. Virtual entry
+  needs relative specifiers + resolveDir — file:// URLs break.
+- Learned: esbuild alias is first-class. Prefer it over custom plugins
+  for bare-specifier redirection.
+- Learned: JSON-in-HTML needs `<` escaped to `\u003c` or a payload
+  containing `</script>` breaks out of the tag.
+- Learned: path guards need trailing-slash comparison to avoid
+  prefix-confusion (app-evil vs app).
+- 58 tests green. Click handler fires in a real browser.
+- Next: piece 4d — signals + render(), then the todo app actually
+  updates on click.
+
 ## 2026-10-04
 
 - Phase 4b: JSX enabled + hydration walk.
