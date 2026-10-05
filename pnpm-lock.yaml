@@ -190,6 +190,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
