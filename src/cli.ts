@@ -1,12 +1,17 @@
 #!/usr/bin/env node
+import { resolve } from 'node:path'
 import { createApp } from './http/app.js'
+import { devMiddleware } from './dev/middleware.js'
 
 const [, , command, ...args] = process.argv
 
 const commands: Record<string, (args: string[]) => Promise<void> | void> = {
   async dev(args) {
-    const routesDir = args[0] ?? './app'
+    const routesDir = resolve(args[0] ?? './app')
     const app = createApp()
+
+    // Must be first — catches /_mini/* before the router runs.
+    app.use(devMiddleware({ routesDir }))
 
     app.use(async (_ctx, next) => {
       const t0 = Date.now()

@@ -92,7 +92,7 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
       routes.push({
         pattern,
         method: 'GET',
-        handler: pageHandler(Component),
+        handler: pageHandler(Component, abs),
       })
       continue
     }
@@ -114,18 +114,14 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
   return routes
 }
 
-function pageHandler(Component: Component): Handler {
+function pageHandler(Component: Component, pageFile: string): Handler {
   return (ctx) => {
-    const root = Component({
+    const payload = {
       params: ctx.params,
       query: Object.fromEntries(ctx.query.entries()),
-    })
-    const html = renderShell(root, {
-      payload: {
-        params: ctx.params,
-        query: Object.fromEntries(ctx.query.entries()),
-      },
-    })
+    }
+    const root = Component(payload)
+    const html = renderShell(root, { payload, pageFile })
     ctx.res.setHeader('content-type', 'text/html; charset=utf-8')
     ctx.res.end(html)
   }
