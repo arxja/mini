@@ -1,3 +1,5 @@
 export { createApp, type App } from './http/app.js'
 export type { Ctx, Handler, Middleware, RouteChain } from './http/types.js'
 export { h, type VNode, type Component, type Child } from './runtime/vnode.js'
+export { signal, effect } from './runtime/signal.js'
+export { render } from './runtime/render.js'

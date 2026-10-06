@@ -16,16 +16,32 @@ export interface BundleOptions {
 export async function bundleClient(opts: BundleOptions): Promise<string> {
   // resolveDir below is srcDir. Relative specifiers resolve against it.
   const hydratePath = rel(srcDir, join(srcDir, 'runtime', 'hydrate.ts'))
+  const renderPath = rel(srcDir, join(srcDir, 'runtime', 'render.ts'))
+  const signalPath = rel(srcDir, join(srcDir, 'runtime', 'signal.ts'))
   const pagePath = rel(srcDir, opts.pageFile)
 
   const entry = `
 import { hydrate } from ${JSON.stringify(hydratePath)}
+import { render } from ${JSON.stringify(renderPath)}
+import { effect } from ${JSON.stringify(signalPath)}
 import Component from ${JSON.stringify(pagePath)}
 
 const payload = window.__MINI_PAYLOAD__ ?? {}
 const root = document.getElementById('root')
 if (!root) throw new Error('[mini] missing #root element')
-hydrate(Component({ ...payload }), root)
+
+let first = true
+effect(() => {
+  const tree = Component({ ...payload })
+  if (first) {
+    // First run: HTML already exists. Attach to it, don't rebuild.
+    hydrate(tree, root)
+    first = false
+  } else {
+    // Subsequent runs: state changed. Replace and re-hydrate.
+    render(tree, root)
+  }
+})
 `
 
   const result = await build({
