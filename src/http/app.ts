@@ -63,6 +63,7 @@ export function createApp(): App {
     delete: register('DELETE'),
 
     async routes(dir) {
+      router.clear()
       const found = await loadFileRoutes(dir)
       for (const r of found) {
         router.add(r.method, r.pattern, [r.handler])

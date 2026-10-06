@@ -66,11 +66,17 @@ async function walk(dir: string): Promise<string[]> {
 // I/O: load
 // ---------------------------------------------------------------------------
 
+let nonce = 0
+function nextNonce(): number {
+  return nonce++
+}
+
 async function loadModule(abs: string): Promise<RouteModule> {
-  // pathToFileURL is required — Node's dynamic import doesn't accept bare paths.
-  // The `.href` gives us a 'file:///...' URL, which handles Windows drive
-  // letters and spaces-in-paths correctly.
-  return (await import(pathToFileURL(abs).href)) as RouteModule
+  // file:// URL + a unique query string. Node's ESM cache keys on the
+  // full URL, so a fresh nonce forces a fresh module load. Without this,
+  // the second `import(abs)` returns the module from the first time.
+  const url = pathToFileURL(abs).href + `?v=${Date.now()}-${nextNonce()}`
+  return (await import(url)) as RouteModule
 }
 
 export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {

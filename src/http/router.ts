@@ -9,8 +9,8 @@ type Runnable = (ctx: Ctx) => Promise<void>
 interface TrieNode {
   /** Literal-segment children, keyed by segment. */
   static: Map<string, TrieNode>
-  /** Param edge, if any. Only one per node — `/x/:a` and `/x/:b` collide. */
-  param?: { name: string; node: TrieNode }
+  /** Param edge. Explicitly `| undefined` so it can be reassigned to undefined. */
+  param: { name: string; node: TrieNode } | undefined
   /** Terminal runners, keyed by method. */
   routes: Map<Method, Runnable>
 }
@@ -24,6 +24,7 @@ export interface Router {
   add(method: Method, path: string, chain: RouteChain): void
   match(method: string, path: string): Match | null
   allowedMethods(path: string): Method[]
+  clear(): void
 }
 
 // ---------------------------------------------------------------------------
@@ -31,7 +32,7 @@ export interface Router {
 // ---------------------------------------------------------------------------
 
 function makeNode(): TrieNode {
-  return { static: new Map(), routes: new Map() }
+  return { static: new Map(), param: undefined, routes: new Map() }
 }
 
 /**
@@ -156,5 +157,14 @@ export function createRouter(): Router {
     return [...result.node.routes.keys()]
   }
 
-  return { add, match, allowedMethods }
+  return {
+    add,
+    match,
+    allowedMethods,
+    clear() {
+      root.static.clear()
+      root.param = undefined
+      root.routes.clear()
+    },
+  }
 }
