@@ -75,4 +75,12 @@ describe('hydrate', () => {
     hydrate('hello', dom)
     expect(dom.innerHTML).toBe('hello')
   })
+
+  it('handles text + expression in the same node', () => {
+    const dom = container('<button>count: 0</button>')
+    const fn = vi.fn()
+    hydrate(h('button', { onClick: fn }, 'count: ', 0), dom)
+    ;(dom.querySelector('button') as HTMLButtonElement).click()
+    expect(fn).toHaveBeenCalledOnce()
+  })
 })

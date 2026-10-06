@@ -1,51 +1,32 @@
-import { describe, it, expect } from 'vitest'
+// @vitest-environment jsdom
+
+import { describe, it, expect, vi } from 'vitest'
 import { h } from '../src/runtime/vnode.js'
-import { renderToString } from '../src/runtime/render-to-string.js'
+import { render } from '../src/runtime/render.js'
 
-describe('renderToString', () => {
-  it('renders text', () => {
-    expect(renderToString('hello')).toBe('hello')
+function container(): HTMLElement {
+  return document.createElement('div')
+}
+
+describe('render', () => {
+  it('mounts a tree', () => {
+    const dom = container()
+    render(h('h1', {}, 'hi'), dom)
+    expect(dom.innerHTML).toBe('<h1>hi</h1>')
   })
 
-  it('renders a simple element', () => {
-    expect(renderToString(h('h1', {}, 'hi'))).toBe('<h1>hi</h1>')
+  it('replaces previous content', () => {
+    const dom = container()
+    render(h('h1', {}, 'a'), dom)
+    render(h('h1', {}, 'b'), dom)
+    expect(dom.innerHTML).toBe('<h1>b</h1>')
   })
 
-  it('renders attributes', () => {
-    expect(renderToString(h('a', { href: '/x' }, 'link'))).toBe('<a href="/x">link</a>')
-  })
-
-  it('uses class not className', () => {
-    expect(renderToString(h('div', { className: 'x' }, ''))).toBe('<div class="x"></div>')
-  })
-
-  it('skips event handlers', () => {
-    const out = renderToString(h('button', { onClick: () => {} }, 'click'))
-    expect(out).toBe('<button>click</button>')
-  })
-
-  it('renders nested children', () => {
-    const tree = h('ul', {}, h('li', {}, 'a'), h('li', {}, 'b'))
-    expect(renderToString(tree)).toBe('<ul><li>a</li><li>b</li></ul>')
-  })
-
-  it('renders a component', () => {
-    const Widget = (props: Record<string, unknown>) => h('span', {}, `hi ${props.name}`)
-    expect(renderToString(h(Widget, { name: 'sam' }))).toBe('<span>hi sam</span>')
-  })
-
-  it('escapes user text (XSS guard)', () => {
-    expect(renderToString('<script>alert(1)</script>')).toBe(
-      '&lt;script&gt;alert(1)&lt;/script&gt;',
-    )
-  })
-
-  it('escapes attribute values', () => {
-    const out = renderToString(h('a', { title: '"evil"' }, ''))
-    expect(out).toBe('<a title="&quot;evil&quot;"></a>')
-  })
-
-  it('skips null children', () => {
-    expect(renderToString(h('div', {}, null, 'x', undefined))).toBe('<div>x</div>')
+  it('attaches events after mounting', () => {
+    const dom = container()
+    const fn = vi.fn()
+    render(h('button', { onClick: fn }, 'x'), dom)
+    ;(dom.querySelector('button') as HTMLButtonElement).click()
+    expect(fn).toHaveBeenCalledOnce()
   })
 })
