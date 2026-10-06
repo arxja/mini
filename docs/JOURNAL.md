@@ -4,6 +4,21 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-06
 
+- Phase 3a done: live reload via fs.watch + SSE.
+- Learned: tsx watch and our watcher fought. Dev server must own the
+  file-watching loop exclusively. Removed `watch` from the dev script.
+- Learned: ESM caches modules by URL. `import(samePath)` returns the
+  same module forever. Cache-bust with `?v=<nonce>`.
+- Learned: rebuild state, don't mutate it. app.routes() clears the
+  trie first so re-walking is idempotent.
+- Learned: observability before diagnosis. Added 3 log lines to
+  broadcast/connect/disconnect and the bug became obvious in one run.
+- Learned: SIGINT cleanup — close watchers, sockets, timers, or the
+  process hangs.
+- Next: Phase 3b — real HMR (module graph + state preservation).
+
+## 2026-10-06
+
 - Phase 4 complete. Signals + render + hydration all working.
 - Learned: signals need a module-level "activeEffect" — getters
   subscribe to it, setters notify subscribers. No Proxy needed for
