@@ -2,16 +2,19 @@
 import { resolve } from 'node:path'
 import { createApp } from './http/app.js'
 import { devMiddleware } from './dev/middleware.js'
+import { createBundleCache } from './dev/cache.js'
+import { watchDir } from './dev/watcher.js'
+import { broadcast } from './dev/events.js'
 
 const [, , command, ...args] = process.argv
 
 const commands: Record<string, (args: string[]) => Promise<void> | void> = {
   async dev(args) {
     const routesDir = resolve(args[0] ?? './app')
+    const cache = createBundleCache()
     const app = createApp()
 
-    // Must be first — catches /_mini/* before the router runs.
-    app.use(devMiddleware({ routesDir }))
+    app.use(devMiddleware({ routesDir, cache }))
 
     app.use(async (_ctx, next) => {
       const t0 = Date.now()
@@ -21,10 +24,24 @@ const commands: Record<string, (args: string[]) => Promise<void> | void> = {
 
     await app.routes(routesDir)
 
+    const watcher = watchDir(routesDir, async (file) => {
+      console.log(`[mini] change: ${file} — reloading`)
+      cache.invalidateAll()
+      await app.routes(routesDir)
+      broadcast('reload')
+    })
+
     const port = 3000
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       console.log(`[mini] dev server on http://localhost:${port}`)
     })
+
+    const shutdown = (): void => {
+      watcher.close()
+      server.close(() => process.exit(0))
+    }
+    process.on('SIGINT', shutdown)
+    process.on('SIGTERM', shutdown)
   },
 
   async build() {

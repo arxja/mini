@@ -33,15 +33,15 @@ if (!root) throw new Error('[mini] missing #root element')
 let first = true
 effect(() => {
   const tree = Component({ ...payload })
-  if (first) {
-    // First run: HTML already exists. Attach to it, don't rebuild.
-    hydrate(tree, root)
-    first = false
-  } else {
-    // Subsequent runs: state changed. Replace and re-hydrate.
-    render(tree, root)
-  }
+  if (first) { hydrate(tree, root); first = false }
+  else render(tree, root)
 })
+
+// Live reload: the server pushes "reload" over SSE when a file changes.
+const es = new EventSource('/_mini/events')
+es.onmessage = (e) => {
+  if (e.data === 'reload') window.location.reload()
+}
 `
 
   const result = await build({

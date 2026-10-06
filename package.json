@@ -11,7 +11,7 @@
     "./jsx-runtime": "./src/runtime/jsx-runtime.ts"
   },
   "scripts": {
-    "dev": "tsx watch src/cli.ts dev",
+    "dev": "tsx src/cli.ts dev",
     "build": "tsc --noEmit && tsx src/cli.ts build",
     "start": "tsx src/cli.ts start",
     "test": "vitest run",
