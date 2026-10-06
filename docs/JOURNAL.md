@@ -2,6 +2,24 @@
 
 One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
+## 2026-10-06
+
+- Phase 4 complete. Signals + render + hydration all working.
+- Learned: signals need a module-level "activeEffect" — getters
+  subscribe to it, setters notify subscribers. No Proxy needed for
+  top-level values.
+- Learned: h() must merge adjacent text children. <button>a {x}</button>
+  is 2 vnode children but 1 DOM text node. React uses comment markers;
+  we merge at build time.
+- Learned: server/client entry split is a real trade-off. Currently
+  src/index.ts re-exports client stuff as a courtesy so TS resolves
+  'mini' consistently. Fix is package.json exports split in Phase 6.
+- Learned: replace-and-hydrate is simpler than diffing but loses DOM
+  state. Diff is a later optimization.
+- 68 tests green. Counter increments in browser.
+- Next: Phase 3 (dev server + HMR) — the reward for all this: edit a
+  page, browser updates without reload.
+
 ## 2026-10-05
 
 - Phase 4c: per-page client bundles, real browser hydration.
