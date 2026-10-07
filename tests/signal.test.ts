@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { signal, effect } from '../src/runtime/signal.js'
+import { signal, effect, _setRestoreData } from '../src/runtime/signal.js'
 
 describe('signal', () => {
   it('reads and writes', () => {
@@ -29,5 +29,23 @@ describe('signal', () => {
     effect(() => spy(count()))
     setCount(0) // same value
     expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves keyed signal values via restore data', () => {
+    _setRestoreData({ 'test-restore-1': 42 })
+    const [get] = signal(0, 'test-restore-1')
+    expect(get()).toBe(42)
+  })
+
+  it('ignores restore data for unkeyed signals', () => {
+    _setRestoreData({ 'test-restore-2': 99 })
+    const [get] = signal(0) // no key
+    expect(get()).toBe(0)
+  })
+
+  it('signals without keys in restore data keep initial', () => {
+    _setRestoreData({})
+    const [get] = signal(7, 'test-restore-3')
+    expect(get()).toBe(7)
   })
 })

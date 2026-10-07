@@ -1,9 +1,7 @@
 import { signal } from 'mini'
 
-// Signals live at MODULE scope, not inside the component.
-// If they were inside, every re-render would create a fresh signal
-// and lose the previous value.
-const [count, setCount] = signal(0)
+// The key preserves this signal across HMR reloads.
+const [count, setCount] = signal(0, 'home-counter')
 
 export default function Home() {
   return (

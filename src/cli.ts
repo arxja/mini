@@ -28,7 +28,7 @@ const commands: Record<string, (args: string[]) => Promise<void> | void> = {
       console.log(`[mini] change: ${file} — reloading`)
       cache.invalidateAll()
       await app.routes(routesDir)
-      broadcast('reload')
+      broadcast('hmr')
     })
 
     const port = 3000
