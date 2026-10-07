@@ -2,6 +2,26 @@
 
 One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
+## 2026-10-7
+
+- Phase 3 complete. State-preserving reload working end-to-end.
+- Learned: state survives only with stable identity. Explicit keys on
+  signals. Vue infers identity from variable names; React from hook
+  order; we make it explicit and visible.
+- Learned: ESM static imports are hoisted above the importing module's
+  body. To set restore data BEFORE a module evaluates, use dynamic
+  import + top-level await.
+- Learned: top-level await requires esbuild target es2022. The
+  target/feature mismatch is a safety net — build fails rather than
+  emitting code old browsers can't parse.
+- Learned: sessionStorage is per-tab, survives reload, cleared on tab
+  close. Right fit for "survive this reload once."
+- Learned: distinguish 'hmr' from 'reload' events. One preserves
+  state, the other starts fresh. Same infrastructure, different
+  intent.
+- 73 tests green. Counter survives file edits.
+- Next: Phase 5 — build. esbuild prod bundle + server output.
+
 ## 2026-10-06
 
 - Phase 3a done: live reload via fs.watch + SSE.
