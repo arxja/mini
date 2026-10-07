@@ -4,6 +4,22 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-7
 
+- Phase 5 done: mini build -> dist/, mini start serves it.
+- Learned: dev vs prod is a timing difference (lazy vs eager
+  bundling), not a code difference. Same shell, same page handler.
+- Learned: bundle URL is the interface. The shell takes a URL, not
+  a file path. Dev/prod URL construction lives at the CLI boundary.
+- Learned: security tests should assert the property ("file isn't
+  served"), not the code path ("status is 403"). The URL parser
+  already normalizes '..' so the middleware guard is defense in
+  depth, not the primary protection.
+- Learned: esbuild prod = minify: true, sourcemap: false, no HMR
+  imports. Tree-shaking removes dev-only code.
+- Next: Phase 6 — plugins. mini.config.ts, plugin hooks, framework
+  becomes a framework.
+
+## 2026-10-7
+
 - Phase 3 complete. State-preserving reload working end-to-end.
 - Learned: state survives only with stable identity. Explicit keys on
   signals. Vue infers identity from variable names; React from hook
