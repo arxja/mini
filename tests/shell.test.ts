@@ -14,11 +14,10 @@ describe('renderShell', () => {
     expect(html).toContain('window.__MINI_PAYLOAD__ = {"id":"42"}')
   })
 
-  it('adds the client bundle script when pageFile is given', () => {
-    const html = renderShell('x', { pageFile: '/abs/app/index.tsx' })
+  it('adds the client bundle script when bundleUrl is given', () => {
+    const html = renderShell('x', { bundleUrl: '/assets/index.js' })
     expect(html).toContain('type="module"')
-    expect(html).toContain('/_mini/client.js?page=')
-    expect(html).toContain(encodeURIComponent('/abs/app/index.tsx'))
+    expect(html).toContain('src="/assets/index.js"')
   })
 
   it('escapes < in the payload (JSON-in-HTML guard)', () => {
