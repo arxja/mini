@@ -2,8 +2,8 @@ import http from 'node:http'
 import { compose } from './compose.js'
 import { createCtx } from './context.js'
 import { createRouter, type Method } from './router.js'
-import { loadFileRoutes } from '../router/files.js'
 import type { Ctx, Middleware, RouteChain } from './types.js'
+import { loadFileRoutes, type LoadOptions } from '../router/files.js'
 
 export interface App {
   use(mw: Middleware): App
@@ -15,7 +15,7 @@ export interface App {
   listen(port: number, cb?: () => void): http.Server
   handle(ctx: Ctx): Promise<void>
   /** Load routes from a directory. Call before listen(). */
-  routes(dir: string): Promise<App>
+  routes(dir: string, opts?: LoadOptions): Promise<App>
 }
 
 export function createApp(): App {
@@ -62,9 +62,9 @@ export function createApp(): App {
     patch: register('PATCH'),
     delete: register('DELETE'),
 
-    async routes(dir) {
+    async routes(dir, opts?) {
       router.clear()
-      const found = await loadFileRoutes(dir)
+      const found = await loadFileRoutes(dir, opts)
       for (const r of found) {
         router.add(r.method, r.pattern, [r.handler])
       }

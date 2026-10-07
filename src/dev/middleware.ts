@@ -1,5 +1,5 @@
 import type { Middleware } from '../http/types.js'
-import { bundleClient } from './client-bundle.js'
+import { bundleClient } from '../build/client-bundle.js'
 import { eventsMiddleware } from './events.js'
 import type { BundleCache } from './cache.js'
 

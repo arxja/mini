@@ -12,9 +12,19 @@ export interface FileRoute {
   pattern: string
   method: Method
   handler: Handler
+  /** Set for .tsx pages — absolute path of the source file. */
+  sourceFile?: string
 }
 
 type RouteModule = Partial<Record<Method, Handler>> & { default?: Component }
+
+export interface LoadOptions {
+  /** Given a page's pattern and source path, return the URL to embed. */
+  bundleUrl: (pattern: string, sourceFile: string) => string
+}
+
+const defaultBundleUrl = (_pattern: string, sourceFile: string): string =>
+  '/_mini/client.js?page=' + encodeURIComponent(sourceFile)
 
 // ---------------------------------------------------------------------------
 // Pure: path → URL pattern
@@ -79,7 +89,8 @@ async function loadModule(abs: string): Promise<RouteModule> {
   return (await import(url)) as RouteModule
 }
 
-export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
+export async function loadFileRoutes(dir: string, opts?: LoadOptions): Promise<FileRoute[]> {
+  const bundleUrl = opts?.bundleUrl ?? defaultBundleUrl
   const files = await walk(dir)
   const routes: FileRoute[] = []
 
@@ -88,7 +99,6 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
     const pattern = fileToPattern(rel)
     const mod = await loadModule(abs)
 
-    // .tsx files are pages: default export is a Component.
     if (rel.endsWith('.tsx')) {
       const Component = mod.default
       if (typeof Component !== 'function') {
@@ -98,12 +108,12 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
       routes.push({
         pattern,
         method: 'GET',
-        handler: pageHandler(Component, abs),
+        handler: pageHandler(Component, bundleUrl(pattern, abs)),
+        sourceFile: abs,
       })
       continue
     }
 
-    // .ts files are API routes: named exports per method.
     let found = false
     for (const method of METHOD_NAMES) {
       const handler = mod[method]
@@ -120,14 +130,14 @@ export async function loadFileRoutes(dir: string): Promise<FileRoute[]> {
   return routes
 }
 
-function pageHandler(Component: Component, pageFile: string): Handler {
+function pageHandler(Component: Component, bundleUrl: string): Handler {
   return (ctx) => {
     const payload = {
       params: ctx.params,
       query: Object.fromEntries(ctx.query.entries()),
     }
     const root = Component(payload)
-    const html = renderShell(root, { payload, pageFile })
+    const html = renderShell(root, { payload, bundleUrl })
     ctx.res.setHeader('content-type', 'text/html; charset=utf-8')
     ctx.res.end(html)
   }
