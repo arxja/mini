@@ -23,8 +23,24 @@ export async function bundleClient(opts: BundleOptions): Promise<string> {
   const entry = `
 import { hydrate } from ${JSON.stringify(hydratePath)}
 import { render } from ${JSON.stringify(renderPath)}
-import { effect } from ${JSON.stringify(signalPath)}
-import Component from ${JSON.stringify(pagePath)}
+import { effect, _setRestoreData, _collectSignals } from ${JSON.stringify(signalPath)}
+
+// -- HMR: restore signal values BEFORE the page module runs.
+// The page's top-level 'signal(0, key)' calls run during import below.
+// ESM evaluates dependencies in order, but the page's own module body
+// runs after our imports. Dynamic import guarantees restoreData is set
+// before 'signal()' is called.
+const HMR_KEY = '__mini_hmr__'
+const raw = sessionStorage.getItem(HMR_KEY)
+if (raw) {
+  try {
+    _setRestoreData(JSON.parse(raw))
+  } catch {
+    sessionStorage.removeItem(HMR_KEY)
+  }
+}
+
+const { default: Component } = await import(${JSON.stringify(pagePath)})
 
 const payload = window.__MINI_PAYLOAD__ ?? {}
 const root = document.getElementById('root')
@@ -37,10 +53,24 @@ effect(() => {
   else render(tree, root)
 })
 
-// Live reload: the server pushes "reload" over SSE when a file changes.
+// Mount succeeded — clear the snapshot so a manual hard-reload starts clean.
+sessionStorage.removeItem(HMR_KEY)
+
+// -- Live reload / HMR
 const es = new EventSource('/_mini/events')
 es.onmessage = (e) => {
-  if (e.data === 'reload') window.location.reload()
+  if (e.data === 'hmr') {
+    // Preserve signal values across the reload.
+    try {
+      sessionStorage.setItem(HMR_KEY, JSON.stringify(_collectSignals()))
+    } catch {
+      // signals not JSON-serializable — fall through to a plain reload
+    }
+    location.reload()
+  } else if (e.data === 'reload') {
+    sessionStorage.removeItem(HMR_KEY)
+    location.reload()
+  }
 }
 `
 
@@ -54,7 +84,7 @@ es.onmessage = (e) => {
     bundle: true,
     write: false,
     format: 'esm',
-    target: 'es2020',
+    target: 'es2022',
     platform: 'browser',
     minify: false,
     sourcemap: 'inline',
