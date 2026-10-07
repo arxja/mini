@@ -4,6 +4,23 @@ One entry per session. 3–6 lines. What happened, what I learned, what's next.
 
 ## 2026-10-7
 
+- Phase 6 done. mini.config.ts + plugin hooks.
+- Learned: defineConfig is an identity function that exists for
+  types. Every framework has one.
+- Learned: transformRoutes chains onRoute across plugins — each
+  sees the previous output. null drops, undefined keeps, object
+  replaces.
+- Learned: the framework lesson — once you have primitives, every
+  feature is a composition. File routing is "walk + router.add".
+  Dev middleware is "app.use". Both are plugins.
+- Learned: hooks are named for the moment, not the implementation.
+  configResolved fires when config is ready; what the plugin does
+  with that moment is up to it.
+- 90 tests green. Example plugin logs at every stage.
+- Next: not a phase — polish. README, examples, maybe publish.
+
+## 2026-10-7
+
 - Phase 5 done: mini build -> dist/, mini start serves it.
 - Learned: dev vs prod is a timing difference (lazy vs eager
   bundling), not a code difference. Same shell, same page handler.
