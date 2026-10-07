@@ -2,7 +2,7 @@ import http from 'node:http'
 import { compose } from './compose.js'
 import { createCtx } from './context.js'
 import { createRouter, type Method } from './router.js'
-import type { Ctx, Middleware, RouteChain } from './types.js'
+import type { Ctx, Handler, Middleware, RouteChain } from './types.js'
 import { loadFileRoutes, type LoadOptions } from '../router/files.js'
 
 export interface App {
@@ -16,6 +16,8 @@ export interface App {
   handle(ctx: Ctx): Promise<void>
   /** Load routes from a directory. Call before listen(). */
   routes(dir: string, opts?: LoadOptions): Promise<App>
+  addRoute(route: { method: Method; pattern: string; handler: Handler }): App
+  clearRoutes(): App
 }
 
 export function createApp(): App {
@@ -92,6 +94,16 @@ export function createApp(): App {
       })
       server.listen(port, cb)
       return server
+    },
+
+    addRoute(r) {
+      router.add(r.method, r.pattern, [r.handler])
+      return app
+    },
+
+    clearRoutes() {
+      router.clear()
+      return app
     },
   }
 
