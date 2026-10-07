@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "mini": "./src/cli.ts"
+  },
   "engines": {
     "node": ">=20"
   },
@@ -13,6 +16,8 @@
   "scripts": {
     "dev": "tsx src/cli.ts dev",
     "build": "tsc --noEmit && tsx src/cli.ts build",
+    "build:example": "tsx src/cli.ts build examples/todo/app",
+    "start:example": "tsx src/cli.ts start examples/todo/app",
     "start": "tsx src/cli.ts start",
     "test": "vitest run",
     "test:watch": "vitest",
